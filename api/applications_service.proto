@@ -28,7 +28,7 @@ message SearchResponse {
 }
 
 message SearchResponseApplication {
-  string application_id = 1;
+  string id = 1;
   int64 request_id = 2;
   string tax_id = 3;
 }
