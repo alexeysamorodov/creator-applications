@@ -5,6 +5,7 @@ import (
 	"net"
 
 	"github.com/alexeysamorodov/creator-applications/internal/app/applications"
+	db "github.com/alexeysamorodov/creator-applications/internal/app/applications/database"
 	pb "github.com/alexeysamorodov/creator-applications/internal/pb"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
@@ -15,7 +16,11 @@ func main() {
 	server := grpc.NewServer()
 
 	// Регистрируем ваш сервис
-	pb.RegisterApplicationsServiceServer(server, &applications.Implementation{})
+	applicationRepository := db.NewApplicationRepository()
+
+	applicationService := applications.NewApplicationsService(applicationRepository)
+
+	pb.RegisterApplicationsServiceServer(server, applicationService)
 
 	// Включаем рефлексию (для gRPC CLI и других инструментов)
 	reflection.Register(server)
