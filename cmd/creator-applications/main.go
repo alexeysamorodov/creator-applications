@@ -1,22 +1,45 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net"
 
 	"github.com/alexeysamorodov/creator-applications/internal/app/applications"
-	db "github.com/alexeysamorodov/creator-applications/internal/app/applications/database"
+	"github.com/alexeysamorodov/creator-applications/internal/app/applications/database"
+	"github.com/alexeysamorodov/creator-applications/internal/config"
 	pb "github.com/alexeysamorodov/creator-applications/internal/pb"
+	"github.com/alexeysamorodov/creator-applications/internal/pkg/db"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 )
 
 func main() {
+	if err := config.ReadConfigYML("config.yml"); err != nil {
+		log.Fatal("Failed init configuration")
+	}
+	cfg := config.GetConfigInstance()
+
+	dsn := fmt.Sprintf("host=%v port=%v user=%v password=%v dbname=%v sslmode=%v",
+		cfg.Database.Host,
+		cfg.Database.Port,
+		cfg.Database.User,
+		cfg.Database.Password,
+		cfg.Database.Name,
+		cfg.Database.SslMode,
+	)
+
+	db, err := db.ConnectDB(dsn, cfg.Database.Driver)
+	if err != nil {
+		log.Fatal("Failed init postgres")
+	}
+	defer db.Close()
+
 	// Создаем gRPC сервер с перехватчиком
 	server := grpc.NewServer()
 
 	// Регистрируем ваш сервис
-	applicationRepository := db.NewApplicationRepository()
+	applicationRepository := database.NewApplicationRepository()
 
 	applicationService := applications.NewApplicationsService(applicationRepository)
 
