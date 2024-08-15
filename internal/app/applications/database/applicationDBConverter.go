@@ -6,9 +6,9 @@ import (
 
 func ToApplicationDB(application domain.Application) *ApplcationDB {
 	result := ApplcationDB{
-		ID:        application.ID,
-		RequestID: application.RequestID,
-		TaxID:     application.TaxID,
+		ID:         application.ID,
+		ExternalID: application.RequestID,
+		TaxID:      application.TaxID,
 	}
 
 	return &result
@@ -17,7 +17,7 @@ func ToApplicationDB(application domain.Application) *ApplcationDB {
 func FromApplicationDB(application ApplcationDB) *domain.Application {
 	result := domain.Application{
 		ID:        application.ID,
-		RequestID: application.RequestID,
+		RequestID: application.ExternalID,
 		TaxID:     application.TaxID,
 	}
 

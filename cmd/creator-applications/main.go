@@ -15,21 +15,19 @@ import (
 )
 
 func main() {
+	defer func() {
+		err := recover()
+		if err != nil {
+			fmt.Println(err)
+		}
+	}()
+
 	if err := config.ReadConfigYML("config.yml"); err != nil {
 		log.Fatal("Failed init configuration")
 	}
 	cfg := config.GetConfigInstance()
 
-	dsn := fmt.Sprintf("host=%v port=%v user=%v password=%v dbname=%v sslmode=%v",
-		cfg.Database.Host,
-		cfg.Database.Port,
-		cfg.Database.User,
-		cfg.Database.Password,
-		cfg.Database.Name,
-		cfg.Database.SslMode,
-	)
-
-	db, err := db.ConnectDB(dsn, cfg.Database.Driver)
+	db, err := db.ConnectDB(cfg.Database)
 	if err != nil {
 		log.Fatal("Failed init postgres")
 	}
@@ -39,7 +37,7 @@ func main() {
 	server := grpc.NewServer()
 
 	// Регистрируем ваш сервис
-	applicationRepository := database.NewApplicationRepository()
+	applicationRepository := database.NewApplicationRepository(db)
 
 	applicationService := applications.NewApplicationsService(applicationRepository)
 

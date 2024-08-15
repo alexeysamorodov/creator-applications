@@ -3,12 +3,22 @@ package applications
 import (
 	"context"
 	"errors"
+	"fmt"
+	"log"
 
 	pb "github.com/alexeysamorodov/creator-applications/internal/pb"
 	"github.com/google/uuid"
 )
 
 func (i *Implementation) Search(ctx context.Context, in *pb.SearchRequest) (*pb.SearchResponse, error) {
+	defer func() {
+		err := recover()
+		if err != nil {
+			fmt.Println(err)
+			panic(err)
+		}
+	}()
+
 	var applicationIds []uuid.UUID
 
 	for _, applicationId := range in.ApplicationIds {
@@ -22,7 +32,11 @@ func (i *Implementation) Search(ctx context.Context, in *pb.SearchRequest) (*pb.
 		applicationIds = append(applicationIds, parsedId)
 	}
 
-	applications := i.ApplicationRepository.SearchApplications(ctx, applicationIds)
+	applications, err := i.ApplicationRepository.SearchApplications(ctx, applicationIds)
+
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	var responseApplications []*pb.SearchResponseApplication
 
