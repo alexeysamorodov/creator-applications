@@ -18,7 +18,7 @@ func (i *Implementation) CreateApplication(ctx context.Context, request *pb.Crea
 		}
 	}()
 
-	application := domain.NewApplication(request.RequestId, request.TaxId)
+	application := domain.NewApplication(request.RequestId)
 
 	err := i.ApplicationRepository.Save(ctx, *application)
 

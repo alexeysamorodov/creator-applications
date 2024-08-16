@@ -43,7 +43,6 @@ func (i *Implementation) Search(ctx context.Context, in *pb.SearchRequest) (*pb.
 	for _, application := range applications {
 		application := pb.SearchResponseApplication{
 			Id:        application.ID.String(),
-			TaxId:     application.TaxID,
 			RequestId: application.RequestID,
 		}
 

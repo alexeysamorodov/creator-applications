@@ -12,7 +12,6 @@ service ApplicationsService {
 
 message CreateApplicationRequest {
   int64 request_id = 1;
-  string tax_id = 2;
 }
 
 message CreateApplicationResponse {
@@ -30,5 +29,4 @@ message SearchResponse {
 message SearchResponseApplication {
   string id = 1;
   int64 request_id = 2;
-  string tax_id = 3;
 }

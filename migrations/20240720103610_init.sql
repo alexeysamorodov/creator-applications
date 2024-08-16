@@ -3,8 +3,7 @@
 create table applications
 (
     id               uuid      not null PRIMARY KEY,
-    external_id      bigint    not null unique,
-    tax_id           text
+    external_id      bigint    not null unique
 );
 -- +goose StatementEnd
 

@@ -33,15 +33,14 @@ func (repository *ApplicationRepository) Save(ctx context.Context, application d
 	query := sq.Insert("applications").Columns(
 		"id",
 		"external_id",
-		"tax_id",
-	).Values(applicationDB.ID, applicationDB.ExternalID, applicationDB.TaxID).RunWith(repository.DB)
+	).Values(applicationDB.ID, applicationDB.ExternalID).RunWith(repository.DB)
 
 	s, args, err := query.ToSql()
 	if err != nil {
 		return err
 	}
 
-	_, err = repository.DB.ExecContext(ctx, s, args)
+	_, err = repository.DB.ExecContext(ctx, s, args...)
 
 	return err
 }
