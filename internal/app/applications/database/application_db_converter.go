@@ -65,11 +65,11 @@ func FromApplicationDB(applicationDB ApplcationDB) (*domain.Application, error) 
 	return &result, nil
 }
 
-func ToAttributesDb(attributes []*valueobjects.ApplicationAttribute) []*ApplicationAttributeDB {
-	var result []*ApplicationAttributeDB
+func ToAttributesDb(attributes []valueobjects.ApplicationAttribute) []ApplicationAttributeDB {
+	var result []ApplicationAttributeDB
 
 	for _, attribute := range attributes {
-		attributeDB := &ApplicationAttributeDB{
+		attributeDB := ApplicationAttributeDB{
 			Name: attribute.Name,
 		}
 
@@ -79,11 +79,11 @@ func ToAttributesDb(attributes []*valueobjects.ApplicationAttribute) []*Applicat
 	return result
 }
 
-func FromAttributesDb(attributes []*ApplicationAttributeDB) []*valueobjects.ApplicationAttribute {
-	var result []*valueobjects.ApplicationAttribute
+func FromAttributesDb(attributes []ApplicationAttributeDB) []valueobjects.ApplicationAttribute {
+	var result []valueobjects.ApplicationAttribute
 
 	for _, attributeDB := range attributes {
-		attribute := &valueobjects.ApplicationAttribute{
+		attribute := valueobjects.ApplicationAttribute{
 			Name: attributeDB.Name,
 		}
 

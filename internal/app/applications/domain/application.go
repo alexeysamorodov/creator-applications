@@ -11,12 +11,12 @@ type Application struct {
 	ID         uuid.UUID
 	RequestID  int64
 	Name       string
-	Attributes []*valueobjects.ApplicationAttribute
+	Attributes []valueobjects.ApplicationAttribute
 	CreatedAt  time.Time
 	UpdatedAt  time.Time
 }
 
-func NewApplication(requestID int64, name string, attributes []*valueobjects.ApplicationAttribute) *Application {
+func NewApplication(requestID int64, name string, attributes []valueobjects.ApplicationAttribute) *Application {
 	now := time.Now().UTC()
 
 	return &Application{

@@ -5,8 +5,8 @@ import (
 	pb "github.com/alexeysamorodov/creator-applications/internal/pb"
 )
 
-func ToApplicationAttributesDomain(attributes []*pb.CreateApplicationRequestAttribute) []*valueobjects.ApplicationAttribute {
-	result := make([]*valueobjects.ApplicationAttribute, len(attributes))
+func ToApplicationAttributesDomain(attributes []*pb.CreateApplicationRequestAttribute) []valueobjects.ApplicationAttribute {
+	result := make([]valueobjects.ApplicationAttribute, len(attributes))
 
 	for i := 0; i < len(attributes); i++ {
 		result[i] = toDomain(attributes[i])
@@ -15,15 +15,15 @@ func ToApplicationAttributesDomain(attributes []*pb.CreateApplicationRequestAttr
 	return result
 }
 
-func toDomain(attribute *pb.CreateApplicationRequestAttribute) *valueobjects.ApplicationAttribute {
-	result := &valueobjects.ApplicationAttribute{
+func toDomain(attribute *pb.CreateApplicationRequestAttribute) valueobjects.ApplicationAttribute {
+	result := valueobjects.ApplicationAttribute{
 		Name: attribute.Name,
 	}
 
 	return result
 }
 
-func FromApplicationAttributesDomain(attributes []*valueobjects.ApplicationAttribute) []*pb.CreateApplicationRequestAttribute {
+func FromApplicationAttributesDomain(attributes []valueobjects.ApplicationAttribute) []*pb.CreateApplicationRequestAttribute {
 	result := make([]*pb.CreateApplicationRequestAttribute, len(attributes))
 
 	for i := 0; i < len(attributes); i++ {
@@ -33,7 +33,7 @@ func FromApplicationAttributesDomain(attributes []*valueobjects.ApplicationAttri
 	return result
 }
 
-func fromDomain(attribute *valueobjects.ApplicationAttribute) *pb.CreateApplicationRequestAttribute {
+func fromDomain(attribute valueobjects.ApplicationAttribute) *pb.CreateApplicationRequestAttribute {
 	result := &pb.CreateApplicationRequestAttribute{
 		Name: attribute.Name,
 	}

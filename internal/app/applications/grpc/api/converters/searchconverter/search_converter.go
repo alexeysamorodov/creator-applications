@@ -23,7 +23,7 @@ func toDomain(attribute *pb.SearchResponseApplicationAttribute) *valueobjects.Ap
 	return result
 }
 
-func FromApplicationAttributesDomain(attributes []*valueobjects.ApplicationAttribute) []*pb.SearchResponseApplicationAttribute {
+func FromApplicationAttributesDomain(attributes []valueobjects.ApplicationAttribute) []*pb.SearchResponseApplicationAttribute {
 	result := make([]*pb.SearchResponseApplicationAttribute, len(attributes))
 
 	for i := 0; i < len(attributes); i++ {
@@ -33,7 +33,7 @@ func FromApplicationAttributesDomain(attributes []*valueobjects.ApplicationAttri
 	return result
 }
 
-func fromDomain(attribute *valueobjects.ApplicationAttribute) *pb.SearchResponseApplicationAttribute {
+func fromDomain(attribute valueobjects.ApplicationAttribute) *pb.SearchResponseApplicationAttribute {
 	result := &pb.SearchResponseApplicationAttribute{
 		Name: attribute.Name,
 	}

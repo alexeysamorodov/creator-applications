@@ -16,8 +16,8 @@ type ApplcationDB struct {
 }
 
 type ApplicationDataDB struct {
-	Name       string                    `json:"name"`
-	Attributes []*ApplicationAttributeDB `json:"attributes"`
+	Name       string                   `json:"name"`
+	Attributes []ApplicationAttributeDB `json:"attributes"`
 }
 
 type ApplicationAttributeDB struct {
