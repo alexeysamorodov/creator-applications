@@ -1,4 +1,4 @@
-package applications
+package grpcapi
 
 import (
 	"context"
@@ -6,6 +6,7 @@ import (
 	"log"
 
 	"github.com/alexeysamorodov/creator-applications/internal/app/applications/domain"
+	createapplicationconverter "github.com/alexeysamorodov/creator-applications/internal/app/applications/grpc/api/converters/createapplicationconverter"
 	pb "github.com/alexeysamorodov/creator-applications/internal/pb"
 )
 
@@ -18,7 +19,12 @@ func (i *Implementation) CreateApplication(ctx context.Context, request *pb.Crea
 		}
 	}()
 
-	application := domain.NewApplication(request.RequestId)
+	applicationAttributes := createapplicationconverter.ToApplicationAttributesDomain(request.ApplicationAttributes)
+
+	application := domain.NewApplication(
+		request.RequestId,
+		request.Name,
+		applicationAttributes)
 
 	err := i.ApplicationRepository.Save(ctx, *application)
 

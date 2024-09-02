@@ -5,8 +5,8 @@ import (
 	"log"
 	"net"
 
-	"github.com/alexeysamorodov/creator-applications/internal/app/applications"
 	"github.com/alexeysamorodov/creator-applications/internal/app/applications/database"
+	grpcapi "github.com/alexeysamorodov/creator-applications/internal/app/applications/grpc/api"
 	"github.com/alexeysamorodov/creator-applications/internal/config"
 	pb "github.com/alexeysamorodov/creator-applications/internal/pb"
 	"github.com/alexeysamorodov/creator-applications/internal/pkg/db"
@@ -39,7 +39,7 @@ func main() {
 	// Регистрируем ваш сервис
 	applicationRepository := database.NewApplicationRepository(db)
 
-	applicationService := applications.NewApplicationsService(applicationRepository)
+	applicationService := grpcapi.NewApplicationsService(applicationRepository)
 
 	pb.RegisterApplicationsServiceServer(server, applicationService)
 

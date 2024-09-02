@@ -1,4 +1,4 @@
-package applications
+package grpcapi
 
 import (
 	db "github.com/alexeysamorodov/creator-applications/internal/app/applications/database"

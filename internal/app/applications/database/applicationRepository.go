@@ -28,12 +28,24 @@ func NewApplicationRepository(db *sqlx.DB) IApplicationRepository {
 }
 
 func (repository *ApplicationRepository) Save(ctx context.Context, application domain.Application) error {
-	applicationDB := ToApplicationDB(application)
+	applicationDB, err := ToApplicationDB(application)
+	if err != nil {
+		return err
+	}
 
 	query := sq.Insert("applications").Columns(
 		"id",
 		"external_id",
-	).Values(applicationDB.ID, applicationDB.ExternalID).RunWith(repository.DB)
+		"data",
+		"created_at",
+		"updated_at",
+	).Values(
+		applicationDB.ID,
+		applicationDB.ExternalID,
+		applicationDB.Data,
+		applicationDB.CreatedAt,
+		applicationDB.UpdatedAt,
+	).RunWith(repository.DB)
 
 	s, args, err := query.ToSql()
 	if err != nil {
@@ -68,7 +80,10 @@ func (repository *ApplicationRepository) SearchApplications(ctx context.Context,
 	}
 
 	for _, applicationDB := range applicationsDB {
-		application := FromApplicationDB(applicationDB)
+		application, err := FromApplicationDB(applicationDB)
+		if err != nil {
+			return applications, err
+		}
 		applications = append(applications, *application)
 	}
 

@@ -1,4 +1,4 @@
-package applications
+package grpcapi
 
 import (
 	"context"
@@ -6,8 +6,10 @@ import (
 	"fmt"
 	"log"
 
+	searchconverter "github.com/alexeysamorodov/creator-applications/internal/app/applications/grpc/api/converters/searchconverter"
 	pb "github.com/alexeysamorodov/creator-applications/internal/pb"
 	"github.com/google/uuid"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 func (i *Implementation) Search(ctx context.Context, in *pb.SearchRequest) (*pb.SearchResponse, error) {
@@ -42,8 +44,12 @@ func (i *Implementation) Search(ctx context.Context, in *pb.SearchRequest) (*pb.
 
 	for _, application := range applications {
 		application := pb.SearchResponseApplication{
-			Id:        application.ID.String(),
-			RequestId: application.RequestID,
+			Id:         application.ID.String(),
+			Name:       application.Name,
+			RequestId:  application.RequestID,
+			CreatedAt:  timestamppb.New(application.CreatedAt),
+			UpdatedAt:  timestamppb.New(application.UpdatedAt),
+			Attributes: searchconverter.FromApplicationAttributesDomain(application.Attributes),
 		}
 
 		responseApplications = append(responseApplications, &application)
