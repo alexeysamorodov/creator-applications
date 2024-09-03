@@ -80,7 +80,7 @@ func (repository *ApplicationRepository) SearchApplications(ctx context.Context,
 	}
 
 	for _, applicationDB := range applicationsDB {
-		application, err := FromApplicationDB(&applicationDB)
+		application, err := ToDomain(&applicationDB)
 		if err != nil {
 			return applications, err
 		}

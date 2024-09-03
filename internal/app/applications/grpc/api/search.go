@@ -9,7 +9,6 @@ import (
 	searchconverter "github.com/alexeysamorodov/creator-applications/internal/app/applications/grpc/api/converters/searchconverter"
 	pb "github.com/alexeysamorodov/creator-applications/internal/pb"
 	"github.com/google/uuid"
-	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 func (i *Implementation) Search(ctx context.Context, in *pb.SearchRequest) (*pb.SearchResponse, error) {
@@ -43,16 +42,9 @@ func (i *Implementation) Search(ctx context.Context, in *pb.SearchRequest) (*pb.
 	var responseApplications []*pb.SearchResponseApplication
 
 	for _, application := range applications {
-		application := pb.SearchResponseApplication{
-			Id:         application.ID.String(),
-			Name:       application.Name,
-			RequestId:  application.RequestID,
-			CreatedAt:  timestamppb.New(application.CreatedAt),
-			UpdatedAt:  timestamppb.New(application.UpdatedAt),
-			Attributes: searchconverter.FromApplicationAttributesDomain(application.Attributes),
-		}
+		applicationPb := searchconverter.ToSearchResponseApplicationPb(&application)
 
-		responseApplications = append(responseApplications, &application)
+		responseApplications = append(responseApplications, applicationPb)
 	}
 
 	response := pb.SearchResponse{

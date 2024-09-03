@@ -8,14 +8,15 @@ import (
 )
 
 type ApplcationDB struct {
-	ID         uuid.UUID       `db:"id"`
-	ExternalID int64           `db:"external_id"`
-	Data       *sql.NullString `db:"data"`
-	CreatedAt  time.Time       `db:"created_at"`
-	UpdatedAt  time.Time       `db:"updated_at"`
+	ID         uuid.UUID      `db:"id"`
+	ExternalID int64          `db:"external_id"`
+	Data       sql.NullString `db:"data"`
+	CreatedAt  time.Time      `db:"created_at"`
+	UpdatedAt  time.Time      `db:"updated_at"`
 }
 
 type ApplicationDataDB struct {
+	State      string                   `json:"state"`
 	Name       string                   `json:"name"`
 	Attributes []ApplicationAttributeDB `json:"attributes"`
 }

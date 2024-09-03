@@ -36,7 +36,7 @@ func (repository *MockApplicationRepository) SearchApplications(ctx context.Cont
 	for _, id := range applicationIDs {
 		applicationDB, ok := repository.Applications[id]
 		if ok {
-			application, err := FromApplicationDB(&applicationDB)
+			application, err := ToDomain(&applicationDB)
 			if err != nil {
 				return applications, err
 			}

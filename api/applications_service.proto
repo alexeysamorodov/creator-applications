@@ -5,6 +5,7 @@ package creator.applications.abstractions;
 option go_package = "github.com/alexeysamorodov/creator-applications/grpc";
 
 import "google/protobuf/timestamp.proto";
+import "enums.proto";
 
 service ApplicationsService {
   rpc CreateApplication (CreateApplicationRequest) returns (CreateApplicationResponse);
@@ -41,6 +42,7 @@ message SearchResponseApplication {
   google.protobuf.Timestamp updated_at = 4;
   string name = 5;
   repeated SearchResponseApplicationAttribute attributes = 6;
+  ApplicationState state = 7;
 }
 
 message SearchResponseApplicationAttribute {

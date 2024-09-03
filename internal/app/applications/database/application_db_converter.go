@@ -6,11 +6,18 @@ import (
 
 	"github.com/alexeysamorodov/creator-applications/internal/app/applications/domain"
 	"github.com/alexeysamorodov/creator-applications/internal/app/applications/domain/valueobjects"
+	"github.com/alexeysamorodov/creator-applications/internal/app/applications/domain/valueobjects/errors"
 )
 
 func ToApplicationDB(application *domain.Application) (*ApplcationDB, error) {
+	state, err := ToApplicationStateDb(application.State)
+	if err != nil {
+		return nil, err
+	}
+
 	appDataDB := ApplicationDataDB{
 		Name:       application.Name,
+		State:      state,
 		Attributes: ToAttributesDb(application.Attributes),
 	}
 
@@ -35,7 +42,7 @@ func ToApplicationDB(application *domain.Application) (*ApplcationDB, error) {
 	result := ApplcationDB{
 		ID:         application.ID,
 		ExternalID: application.RequestID,
-		Data:       &dataNullString,
+		Data:       dataNullString,
 		CreatedAt:  application.CreatedAt,
 		UpdatedAt:  application.UpdatedAt,
 	}
@@ -43,7 +50,7 @@ func ToApplicationDB(application *domain.Application) (*ApplcationDB, error) {
 	return &result, nil
 }
 
-func FromApplicationDB(applicationDB *ApplcationDB) (*domain.Application, error) {
+func ToDomain(applicationDB *ApplcationDB) (*domain.Application, error) {
 	result := domain.Application{
 		ID:        applicationDB.ID,
 		RequestID: applicationDB.ExternalID,
@@ -51,13 +58,19 @@ func FromApplicationDB(applicationDB *ApplcationDB) (*domain.Application, error)
 		UpdatedAt: applicationDB.UpdatedAt,
 	}
 
-	if applicationDB.Data != nil && applicationDB.Data.Valid {
+	if applicationDB.Data.Valid {
 		var appData ApplicationDataDB
 		err := json.Unmarshal([]byte(applicationDB.Data.String), &appData)
 		if err != nil {
 			return nil, err
 		}
 
+		state, err := FromApplicationStateDb(appData.State)
+		if err != nil {
+			return nil, err
+		}
+
+		result.State = state
 		result.Name = appData.Name
 		result.Attributes = FromAttributesDb(appData.Attributes)
 	}
@@ -91,4 +104,33 @@ func FromAttributesDb(attributes []ApplicationAttributeDB) []valueobjects.Applic
 	}
 
 	return result
+}
+
+func ToApplicationStateDb(applicationState domain.ApplicationState) (string, error) {
+	var result string
+
+	switch applicationState {
+	case domain.ApplicationState_Created:
+		result = "Created"
+	default:
+		return "", errors.NewEnumOutOfRangeError(applicationState)
+	}
+
+	return result, nil
+}
+
+func FromApplicationStateDb(applicationState string) (domain.ApplicationState, error) {
+	var result domain.ApplicationState
+	if applicationState != "" {
+		switch applicationState {
+		case "Created":
+			result = domain.ApplicationState_Created
+		default:
+			return domain.ApplicationState_None, errors.NewEnumOutOfRangeError(applicationState)
+		}
+	} else {
+		result = domain.ApplicationState_Created
+	}
+
+	return result, nil
 }

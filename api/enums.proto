@@ -1,0 +1,10 @@
+syntax = "proto3";
+
+package creator.applications.abstractions;
+
+option go_package = "github.com/alexeysamorodov/creator-applications/grpc";
+
+enum ApplicationState {
+    ApplicationState_None = 0;
+    ApplicationState_Created = 1;
+}
