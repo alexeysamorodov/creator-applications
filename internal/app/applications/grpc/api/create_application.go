@@ -26,7 +26,7 @@ func (i *Implementation) CreateApplication(ctx context.Context, request *pb.Crea
 		request.Name,
 		applicationAttributes)
 
-	err := i.ApplicationRepository.Save(ctx, *application)
+	err := i.ApplicationRepository.Save(ctx, application)
 
 	if err != nil {
 		log.Fatal(err)

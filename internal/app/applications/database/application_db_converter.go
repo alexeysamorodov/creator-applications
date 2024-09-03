@@ -8,7 +8,7 @@ import (
 	"github.com/alexeysamorodov/creator-applications/internal/app/applications/domain/valueobjects"
 )
 
-func ToApplicationDB(application domain.Application) (*ApplcationDB, error) {
+func ToApplicationDB(application *domain.Application) (*ApplcationDB, error) {
 	appDataDB := ApplicationDataDB{
 		Name:       application.Name,
 		Attributes: ToAttributesDb(application.Attributes),
@@ -43,7 +43,7 @@ func ToApplicationDB(application domain.Application) (*ApplcationDB, error) {
 	return &result, nil
 }
 
-func FromApplicationDB(applicationDB ApplcationDB) (*domain.Application, error) {
+func FromApplicationDB(applicationDB *ApplcationDB) (*domain.Application, error) {
 	result := domain.Application{
 		ID:        applicationDB.ID,
 		RequestID: applicationDB.ExternalID,

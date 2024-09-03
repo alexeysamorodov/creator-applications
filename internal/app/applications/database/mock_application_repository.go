@@ -20,7 +20,7 @@ func NewMockApplicationRepository() IApplicationRepository {
 	}
 }
 
-func (repository *MockApplicationRepository) Save(ctx context.Context, application domain.Application) error {
+func (repository *MockApplicationRepository) Save(ctx context.Context, application *domain.Application) error {
 	applicationDB, err := ToApplicationDB(application)
 
 	if err != nil {
@@ -36,7 +36,7 @@ func (repository *MockApplicationRepository) SearchApplications(ctx context.Cont
 	for _, id := range applicationIDs {
 		applicationDB, ok := repository.Applications[id]
 		if ok {
-			application, err := FromApplicationDB(applicationDB)
+			application, err := FromApplicationDB(&applicationDB)
 			if err != nil {
 				return applications, err
 			}

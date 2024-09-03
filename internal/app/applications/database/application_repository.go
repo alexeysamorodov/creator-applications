@@ -13,7 +13,7 @@ import (
 var sq = squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar)
 
 type IApplicationRepository interface {
-	Save(ctx context.Context, application domain.Application) error
+	Save(ctx context.Context, application *domain.Application) error
 	SearchApplications(ctx context.Context, applicationIDs []uuid.UUID) (applications []domain.Application, err error)
 }
 
@@ -27,7 +27,7 @@ func NewApplicationRepository(db *sqlx.DB) IApplicationRepository {
 	}
 }
 
-func (repository *ApplicationRepository) Save(ctx context.Context, application domain.Application) error {
+func (repository *ApplicationRepository) Save(ctx context.Context, application *domain.Application) error {
 	applicationDB, err := ToApplicationDB(application)
 	if err != nil {
 		return err
@@ -80,7 +80,7 @@ func (repository *ApplicationRepository) SearchApplications(ctx context.Context,
 	}
 
 	for _, applicationDB := range applicationsDB {
-		application, err := FromApplicationDB(applicationDB)
+		application, err := FromApplicationDB(&applicationDB)
 		if err != nil {
 			return applications, err
 		}
