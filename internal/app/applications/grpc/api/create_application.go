@@ -21,7 +21,7 @@ func (i *Implementation) CreateApplication(ctx context.Context, request *pb.Crea
 
 	applicationAttributes := createapplicationconverter.ToApplicationAttributesDomain(request.ApplicationAttributes)
 
-	application := domain.NewApplication(
+	application := domain.CreateNewApplication(
 		request.RequestId,
 		request.Name,
 		applicationAttributes)

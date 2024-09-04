@@ -13,8 +13,10 @@ type Application struct {
 	State      ApplicationState
 	Name       string
 	Attributes []valueobjects.ApplicationAttribute
+	Tasks      []ITask
 	CreatedAt  time.Time
 	UpdatedAt  time.Time
+	// TODO: add field HasNotCompletedTasks
 }
 
 type ApplicationState int32
@@ -24,8 +26,14 @@ const (
 	ApplicationState_Created ApplicationState = 1
 )
 
-func NewApplication(requestID int64, name string, attributes []valueobjects.ApplicationAttribute) *Application {
+func CreateNewApplication(
+	requestID int64,
+	name string,
+	attributes []valueobjects.ApplicationAttribute,
+) *Application {
 	now := time.Now().UTC()
+	var appTasks []ITask
+	appTasks = append(appTasks, *CreateNewChangeStateNotifyTask(ApplicationState_None, ApplicationState_Created))
 
 	return &Application{
 		ID:         uuid.New(),
@@ -33,7 +41,29 @@ func NewApplication(requestID int64, name string, attributes []valueobjects.Appl
 		State:      ApplicationState_Created,
 		Name:       name,
 		Attributes: attributes,
+		Tasks:      appTasks,
 		CreatedAt:  now,
 		UpdatedAt:  now,
+	}
+}
+
+func CreateApplicationFromDB(
+	id uuid.UUID,
+	requestID int64,
+	state ApplicationState,
+	name string,
+	attributes []valueobjects.ApplicationAttribute,
+	tasks []ITask,
+	createdAt time.Time,
+	updatedAt time.Time,
+) *Application {
+	return &Application{
+		ID:         id,
+		RequestID:  requestID,
+		State:      state,
+		Name:       name,
+		Attributes: attributes,
+		CreatedAt:  createdAt,
+		UpdatedAt:  updatedAt,
 	}
 }

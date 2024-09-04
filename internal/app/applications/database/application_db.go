@@ -10,7 +10,8 @@ import (
 type ApplcationDB struct {
 	ID         uuid.UUID      `db:"id"`
 	ExternalID int64          `db:"external_id"`
-	Data       sql.NullString `db:"data"`
+	DataJson   sql.NullString `db:"data"`
+	TasksJson  sql.NullString `db:"tasks"`
 	CreatedAt  time.Time      `db:"created_at"`
 	UpdatedAt  time.Time      `db:"updated_at"`
 }
@@ -23,4 +24,13 @@ type ApplicationDataDB struct {
 
 type ApplicationAttributeDB struct {
 	Name string `json:"name"`
+}
+
+type TasksContainerDB struct {
+	Tasks []TaskDataDB `json:"tasks"`
+}
+
+type TaskDataDB struct {
+	Type     string `json:"type"`
+	DataJson string `json:"data"`
 }
