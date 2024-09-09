@@ -1,0 +1,41 @@
+syntax = "proto3";
+
+package creator.applications.abstractions;
+
+option go_package = "github.com/alexeysamorodov/creator-applications/grpc";
+
+import "google/protobuf/timestamp.proto";
+
+message EventMessageKey {
+  int64 application_id = 1;
+}
+
+message EventMessageValue {
+  int64 application_id = 1;
+  google.protobuf.Timestamp created_at = 2;
+  oneof event_type {
+    ApplicationStateChangedEvent application_state_changed = 3;
+    ApplicationCreatedEventDto application_created = 4;
+    ApplicationUpdatedEventDto application_updated = 5;
+  }
+}
+
+message ApplicationStateChangedEvent {
+  ApplicationStateDto old_state = 1;
+  ApplicationStateDto new_state = 2;
+  optional string login = 3;
+}
+
+enum ApplicationStateDto {
+  ApplicationStateDto_None = 0;
+  ApplicationStateDto_Created = 1;
+}
+
+message ApplicationCreatedEventDto {
+  int64 application_id = 1;
+}
+
+message ApplicationUpdatedEventDto {
+  int64 application_id = 1;
+  google.protobuf.Timestamp last_changed = 2;
+}

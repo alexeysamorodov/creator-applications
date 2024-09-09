@@ -1,0 +1,40 @@
+syntax = "proto3";
+
+package creator.applications.abstractions;
+
+option go_package = "github.com/alexeysamorodov/creator-applications/grpc";
+
+message CreatorApplicationsCommandResponseMessageKey {
+  oneof key {
+    int64 request_id = 1;
+  }
+}
+  
+message CreatorApplicationsCommandResponseMessageValue {
+  oneof command {
+    CreateApplicationCommandResponse create_application_command = 1;
+  }
+}
+
+message CreateApplicationCommandResponse {
+    oneof response {
+        CreateApplicationCommandResponseSuccess success = 1;
+        CreateApplicationCommandResponseFail fail = 2;
+    }
+}
+  
+message CreateApplicationCommandResponseSuccess {
+  int64 request_id = 1;
+  int64 application_id = 2;
+  string login = 3;
+}
+  
+message CreateApplicationCommandResponseFail {
+  int64 request_id = 1;
+  CreateApplicationErrorsDto error = 2;
+}
+  
+enum CreateApplicationErrorsDto {
+  CreateApplicationErrorsDto_None = 0;
+  CreateApplicationErrorsDto_ValidationError = 1;
+}

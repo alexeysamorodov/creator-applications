@@ -1,0 +1,69 @@
+using Confluent.Kafka;
+
+using MediatR;
+
+using Microsoft.Extensions.Options;
+
+namespace O.Contracts.Presentation.Consumers.Contracts;
+
+internal sealed class CreatorContractsCommandConsumer : IKafkaMessageHandler<CreatorContractsCommandMessageKey, CreatorContractsCommandMessageValue>
+{
+    private readonly IMediator _mediator;
+    private readonly ILogger<CreatorContractsCommandConsumer> _logger;
+    private readonly IOptionsMonitor<CreatorContractsCommandConsumerOptions> _optionsMonitor;
+
+    public CreatorContractsCommandConsumer(
+        IMediator mediator,
+        ILogger<CreatorContractsCommandConsumer> logger,
+        IOptionsMonitor<CreatorContractsCommandConsumerOptions> optionsMonitor)
+    {
+        _mediator = mediator;
+        _logger = logger;
+        _optionsMonitor = optionsMonitor;
+    }
+
+    public async Task Handle(
+        ConsumeResult<CreatorContractsCommandMessageKey, CreatorContractsCommandMessageValue> message,
+        CancellationToken cancellationToken)
+    {
+        if (!_optionsMonitor.CurrentValue.Enabled)
+        {
+            await Task.Delay(TimeSpan.FromSeconds(20), cancellationToken);
+            throw new ApplicationException($"Consumer {nameof(CreatorContractsCommandConsumer)} disabled");
+        }
+
+        CreatorContractsCommandMessageValue messageValue = message.Message.Value;
+
+        IBaseRequest command;
+
+        switch (messageValue.CommandCase)
+        {
+            case CreatorContractsCommandMessageValue.CommandOneofCase.CreateContractCommand:
+                command = CreateContractCommandConverter.ToInternal(messageValue.CreateContractCommand);
+
+                break;
+                
+            case CreatorContractsCommandMessageValue.CommandOneofCase.ProcessOfferAccepted:
+                command = new ProcessOfferAcceptedCommandInternal
+                {
+                    ContractId = messageValue.ProcessOfferAccepted.ContractId,
+                    ModifiedBy = messageValue.Login
+                };
+
+                break;
+            default:
+                throw EnumOutOfRangeException.Create(messageValue.CommandCase);
+        }
+
+        try
+        {
+            await _mediator.Send(command, cancellationToken);
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e, $"Error on processing command {message.Message.Value.CommandCase} with key {message.Message.Key.ContractorId}");
+
+            throw;
+        }
+    }
+}

@@ -1,0 +1,40 @@
+namespace O.Creator.Applications.Application.Applications.Services.Tasks.Services.TaskHandlers;
+
+public abstract class ApplicationTaskHandlerBase<T> : IApplicationTaskHandler where T : BaseTask
+{
+    private readonly IApplicationRepository _applicationRepository;
+
+    protected ApplicationTaskHandlerBase(IApplicationRepository applicationRepository)
+    {
+        _applicationRepository = applicationRepository;
+    }
+
+    public async Task Handle(Guid applicationId, Guid taskId, CancellationToken cancellationToken)
+    {
+        RegistrationApplication application = await _applicationRepository.GetByIdRequired(applicationId, cancellationToken);
+
+        var task = (T)application.Tasks.Single(x => x.Id == taskId);
+
+        if (task.State == TaskState.Completed)
+        {
+            return;
+        }
+
+        if (!CanHandle(task))
+        {
+            throw new InvalidOperationException($"Unsupported task type: {task.GetType()}");
+        }
+
+        await HandleInner(application, task, cancellationToken);
+
+        application.SetTaskCompleted(task.Id);
+        await _applicationRepository.Save(application, cancellationToken);
+    }
+
+    public bool CanHandle(BaseTask task)
+    {
+        return task is T;
+    }
+
+    protected abstract Task HandleInner(RegistrationApplication application, T task, CancellationToken cancellationToken);
+}

@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+package creator.applications.abstractions;
+
+option go_package = "github.com/alexeysamorodov/creator-applications/grpc";
+
+message MigrationCommandMessageKey{
+    string key = 1;
+}
+
+message MigrationCommandMessageValue {
+    oneof command {
+        MigrateApplicationsCommand migrate_applications_command = 1;
+    }
+}
+
+message MigrateApplicationsCommand {
+    repeated int64 application_ids = 1;
+}

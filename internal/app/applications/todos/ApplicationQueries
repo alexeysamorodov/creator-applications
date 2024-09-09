@@ -1,0 +1,79 @@
+internal static class ApplicationQueries
+{
+    public static QueryDefinition<ApplicationDbRow> Search(SearchApplicationParamsDb searchParams)
+    {
+        return new QueryDefinition<ApplicationDbRow>(
+            @"
+SELECT
+    id,
+    created_at,
+    modified_at,
+    application_json
+FROM applications
+WHERE   (cardinality(@Ids) = 0 or id = any(@Ids)) and
+        (cardinality(@ExternalIds) = 0 or external_id = any(@ExternalIds)) and
+        (cardinality(@TaxIds) = 0 or (application_json->>'TaxId') = any(@TaxIds)) and
+        (cardinality(@ContractIds) = 0 or (application_json->>'ContractId')::bigint = any(@ContractIds)) and
+        (cardinality(@States) = 0 or (application_json->>'State')::varchar = any(@States)) and
+        (@CreatedAtGreaterThanOrEqual::date is null or created_at::date >= @CreatedAtGreaterThanOrEqual::date) and
+        (@CreatedAtLessThanOrEqual::date is null or created_at::date <= @CreatedAtLessThanOrEqual::date) and
+        (@ModifiedAtLessThanOrEqual::date is null or modified_at::date <= @ModifiedAtLessThanOrEqual::date) and
+        (@HasInProcessTasks is null or (application_json->'HasInProcessTasks')::bool = @HasInProcessTasks::bool)
+order by created_at desc
+offset @Offset limit @Limit;",
+            new
+            {
+                Ids = searchParams.ApplicationIds,
+                ExternalIds = searchParams.ExternalIds,
+                TaxIds = searchParams.TaxIds,
+                ContractIds = searchParams.ContractIds,
+                States = searchParams.States,
+                CreatedAtGreaterThanOrEqual = searchParams.CreatedAtGreaterThanOrEqual,
+                CreatedAtLessThanOrEqual = searchParams.CreatedAtLessThanOrEqual,
+                @ModifiedAtLessThanOrEqual = searchParams.ModifiedAtLessThanOrEqual,
+                @HasInProcessTasks = searchParams.HasInProcessTasks,
+                Offset = searchParams.Offset,
+                Limit = searchParams.Limit
+            });
+    }
+
+    public static QueryDefinition<DateTime> Save(ApplicationDbRow applicationRow)
+    {
+        return new QueryDefinition<DateTime>(
+            @"
+INSERT INTO applications
+(
+    id,
+    external_id,
+    created_at,
+    modified_at,
+    application_json
+)
+VALUES
+(
+    @id,
+    @external_id,
+    @created_at,
+    @modified_at,
+    @json::jsonb
+)
+on conflict (id) do update
+SET
+    application_json = @json::jsonb,
+    modified_at = timezone('utc'::text, CURRENT_TIMESTAMP),
+    external_id = @external_id::bigint
+WHERE
+    applications.id = @id
+    and applications.modified_at = @modified_at
+RETURNING applications.modified_at;
+",
+            new
+            {
+                id = applicationRow.Id,
+                external_id = applicationRow.ExternalId,
+                created_at = DateTime.SpecifyKind(applicationRow.CreatedAt, DateTimeKind.Utc),
+                modified_at = DateTime.SpecifyKind(applicationRow.ModifiedAt, DateTimeKind.Utc),
+                json = applicationRow.ApplicationJson
+            });
+    }
+}

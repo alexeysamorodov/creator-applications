@@ -1,0 +1,80 @@
+using Confluent.Kafka;
+
+using MediatR;
+
+using Microsoft.Extensions.Options;
+
+namespace O.Contracts.Presentation.Consumers.SchedulerLaunch;
+
+internal sealed class SchedulerLaunchEventHandler : IKafkaMessageHandler<Ignore, LaunchEvent>
+{
+    private readonly IMediator _mediator;
+    private readonly ILogger<SchedulerLaunchEventHandler> _logger;
+    private readonly IOptionsMonitor<SchedulerLaunchEventHandlerOptions> _schedulerOptions;
+
+    public SchedulerLaunchEventHandler(
+        IMediator mediator,
+        ILogger<SchedulerLaunchEventHandler> logger,
+        IOptionsMonitor<SchedulerLaunchEventHandlerOptions> schedulerOptions)
+    {
+        _mediator = mediator;
+        _logger = logger;
+        _schedulerOptions = schedulerOptions;
+    }
+
+    public async Task Handle(ConsumeResult<Ignore, LaunchEvent> message, CancellationToken cancellationToken)
+    {
+        LaunchEvent LaunchEvent = message.Message.Value;
+
+        if (!_schedulerOptions.CurrentValue.Enabled)
+        {
+            await Task.Delay(TimeSpan.FromSeconds(20), cancellationToken);
+            throw new ApplicationException($"Consumer {nameof(SchedulerLaunchEventHandler)} disabled");
+        }
+
+        if (!IsAccepted(LaunchEvent))
+        {
+            return;
+        }
+
+        _logger.LogInformation($"Scheduler event {message.Message.Value.Operation} received.");
+
+        await RunOperation(LaunchEvent, cancellationToken);
+    }
+
+    private static bool IsAccepted(LaunchEvent LaunchEvent)
+    {
+        return LaunchEvent.Target == SchedulerLaunchEventHandlerOptions.Target
+            && SchedulerLaunchEventHandlerOptions.SupportedOperations.Contains(LaunchEvent.Operation);
+    }
+
+    private static IBaseRequest GetCommand(string operation)
+    {
+        return operation switch
+        {
+            SchedulerLaunchEventHandlerOptions.ProcessSkippedTasks =>
+                new ProcessSkippedTasksCommandInternal(),
+
+            _ => throw new ArgumentOutOfRangeException(nameof(operation))
+        };
+    }
+
+    private async Task RunOperation(LaunchEvent LaunchEvent, CancellationToken cancellationToken)
+    {
+        _logger.LogInformation($"Scheduler started {LaunchEvent.Operation} operation");
+
+        try
+        {
+            IBaseRequest command = GetCommand(LaunchEvent.Operation);
+            await _mediator.Send(command, cancellationToken);
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e, $"Scheduler finished {LaunchEvent.Operation} operation with error");
+
+            throw;
+        }
+
+        _logger.LogInformation($"Scheduler finished {LaunchEvent.Operation} operation");
+    }
+}

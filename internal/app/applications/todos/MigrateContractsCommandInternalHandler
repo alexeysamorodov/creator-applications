@@ -1,0 +1,51 @@
+using MediatR;
+
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+
+namespace O.Contracts.Application.Migration.Process;
+
+internal sealed class MigrateContractsCommandInternalHandler : AsyncRequestHandler<MigrateContractsCommandInternal>
+{
+    private readonly IContractRepository _contractRepository;
+    private readonly IOptionsMonitor<MigrateContractsOptions> _options;
+    private readonly ILogger _logger;
+
+    public MigrateContractsCommandInternalHandler(
+        IContractRepository contractRepository,
+        IOptionsMonitor<MigrateContractsOptions> options,
+        ILogger<MigrateContractsCommandInternalHandler> logger)
+    {
+        _contractRepository = contractRepository;
+        _options = options;
+        _logger = logger;
+    }
+
+    protected override async Task Handle(MigrateContractsCommandInternal request, CancellationToken cancellationToken)
+    {
+        if (_options.CurrentValue.Enabled is false)
+        {
+            throw new ApplicationException("Миграция отключена в настройках");
+        }
+
+        TimeSpan delay = TimeSpan.FromMilliseconds(_options.CurrentValue.DelayInMilliseconds);
+
+        await Task.Delay(delay, cancellationToken);
+
+        foreach (long contractId in request.ContractIds)
+        {
+            try
+            {
+                Contract contract = await _contractRepository.GetByIdRequired(contractId, cancellationToken);
+                await _contractRepository.Save(contract, cancellationToken);
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, "Error while processing migration for contract with Id={ContractId}",
+                    contractId);
+
+                throw;
+            }
+        }
+    }
+}

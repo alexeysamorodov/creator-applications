@@ -1,0 +1,41 @@
+using Confluent.Kafka;
+
+using MediatR;
+
+using Microsoft.Extensions.Options;
+
+namespace O.Contracts.Presentation.Consumers.Migration;
+
+internal sealed class MigrationTaskConsumer : IKafkaMessageHandler<Ignore, MigrationCommandMessageValue>
+{
+    private readonly IMediator _mediator;
+    private readonly IOptionsMonitor<MigrationTaskConsumerOptions> _optionsMonitor;
+
+    public MigrationTaskConsumer(IMediator mediator, IOptionsMonitor<MigrationTaskConsumerOptions> optionsMonitor)
+    {
+        _mediator = mediator;
+        _optionsMonitor = optionsMonitor;
+    }
+    
+    public async Task Handle(ConsumeResult<Ignore, MigrationCommandMessageValue> message, CancellationToken cancellationToken)
+    {
+        if (!_optionsMonitor.CurrentValue.Enabled)
+        {
+            await Task.Delay(TimeSpan.FromSeconds(20), cancellationToken);
+            throw new ApplicationException($"Consumer {nameof(MigrationTaskConsumer)} disabled");
+        }
+
+        MigrationCommandMessageValue messageValue = message.Message.Value;
+        IRequest command = GetCommand(messageValue);
+        await _mediator.Send(command, cancellationToken);
+    }
+
+    private IRequest GetCommand(MigrationCommandMessageValue message)
+    {
+        return message.CommandCase switch
+        {
+            MigrationCommandMessageValue.CommandOneofCase.MigrateContractsCommand => MigrateContractsCommandConverter.ToInternal(message.MigrateContractsCommand),
+            _ => throw new ArgumentOutOfRangeException($"Unexpected migration command type {message.CommandCase}")
+        };
+    }
+}

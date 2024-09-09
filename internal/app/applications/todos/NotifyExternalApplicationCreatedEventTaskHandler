@@ -1,0 +1,21 @@
+namespace O.Creator.Applications.Application.Applications.Services.Tasks.Services.TaskHandlers;
+
+public sealed class NotifyExternalApplicationCreatedEventTaskHandler : ApplicationTaskHandlerBase<NotifyExternalApplicationCreatedEventTask>
+{
+    private readonly IExternalApplicationCreatedEventProducer _eventProducer;
+
+    public NotifyExternalApplicationCreatedEventTaskHandler(
+        IApplicationRepository applicationRepository,
+        IExternalApplicationCreatedEventProducer eventProducer) : base(applicationRepository)
+    {
+        _eventProducer = eventProducer;
+    }
+
+    protected override async Task HandleInner(RegistrationApplication application, NotifyExternalApplicationCreatedEventTask task, CancellationToken cancellationToken)
+    {
+        await _eventProducer.Produce(
+            application.ExternalId,
+            application.Id,
+            cancellationToken);
+    }
+}

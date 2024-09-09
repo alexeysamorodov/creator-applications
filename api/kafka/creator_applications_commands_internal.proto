@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+package creator.applications.abstractions;
+
+option go_package = "github.com/alexeysamorodov/creator-applications/grpc";
+
+message InternalCommandMessageKey {
+  int64 application_id = 1;
+}
+
+message InternalCommandMessageValue {
+  oneof command {
+    ProcessApplicationTasksCommand process_application_tasks_command = 1;
+  }
+}
+
+message ProcessApplicationTasksCommand {
+  int64 application_id = 1;
+}

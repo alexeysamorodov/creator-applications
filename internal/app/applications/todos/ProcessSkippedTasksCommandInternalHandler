@@ -1,0 +1,36 @@
+using MediatR;
+
+namespace O.Creator.Applications.Application.Applications.Commands.ProcessSkippedTasks;
+
+public class ProcessSkippedTasksCommandInternalHandler : AsyncRequestHandler<ProcessSkippedTasksCommandInternal>
+{
+    private readonly IApplicationRepository _contractRepository;
+    private readonly ITasksProducer _tasksProducer;
+
+    public ProcessSkippedTasksCommandInternalHandler(IApplicationRepository contractRepository, ITasksProducer tasksProducer)
+    {
+        _contractRepository = contractRepository;
+        _tasksProducer = tasksProducer;
+    }
+
+    protected override async Task Handle(
+        ProcessSkippedTasksCommandInternal request,
+        CancellationToken cancellationToken)
+    {
+        const int minutesDelay = -10;
+
+        var searchParams = new SearchApplicationParams
+        {
+            ModifiedAtLessThanOrEqual = DateTime.UtcNow.AddMinutes(minutesDelay),
+            HasInProcessTasks = true,
+            Limit = int.MaxValue
+        };
+
+        IReadOnlyCollection<RegistrationApplication> applications = await _contractRepository.Search(searchParams, cancellationToken);
+
+        foreach (RegistrationApplication application in applications)
+        {
+            await _tasksProducer.Produce(application.Id, cancellationToken);
+        }
+    }
+}

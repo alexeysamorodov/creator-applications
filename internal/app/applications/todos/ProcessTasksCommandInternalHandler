@@ -1,0 +1,71 @@
+using MediatR;
+
+using Microsoft.Extensions.Logging;
+
+namespace O.Creator.Applications.Application.Applications.Services.Tasks.Services.TaskHandlers;
+
+internal sealed class ProcessTasksCommandInternalHandler : AsyncRequestHandler<ProcessTasksCommandInternal>
+{
+    private readonly IApplicationRepository _applicationRepository;
+    private readonly ILogger<ProcessTasksCommandInternalHandler> _logger;
+    private readonly ITasksProducer _tasksProducer;
+    private readonly IEnumerable<IApplicationTaskHandler> _taskHandlers;
+
+    public ProcessTasksCommandInternalHandler(
+        IApplicationRepository applicationRepository,
+        ILogger<ProcessTasksCommandInternalHandler> logger,
+        ITasksProducer tasksProducer,
+        IEnumerable<IApplicationTaskHandler> taskHandlers)
+    {
+        _applicationRepository = applicationRepository;
+        _logger = logger;
+        _tasksProducer = tasksProducer;
+        _taskHandlers = taskHandlers;
+    }
+
+    protected override async Task Handle(ProcessTasksCommandInternal request, CancellationToken cancellationToken)
+    {
+        RegistrationApplication application = await _applicationRepository.GetByIdRequired(request.ApplicationId, cancellationToken);
+
+        IReadOnlyCollection<BaseTask> tasks = application.GetUncompletedTasks();
+
+        if (!tasks.Any())
+        {
+            return;
+        }
+
+        foreach (BaseTask task in tasks)
+        {
+            try
+            {
+                await Process(application, task, cancellationToken);
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(
+                    e,
+                    "Ошибка при обработке задачи TaskId: {TaskId}, TaskType: {Type}, по событию {FullName}. ApplicationId: {RequestApplicationId}",
+                    task.Id,
+                    task.GetType(),
+                    request.GetType().FullName,
+                    request.ApplicationId);
+
+                throw;
+            }
+        }
+
+        await _tasksProducer.Produce(application.Id, cancellationToken);
+    }
+
+    private async Task Process(RegistrationApplication application, BaseTask task, CancellationToken cancellationToken)
+    {
+        IApplicationTaskHandler? handler = _taskHandlers.SingleOrDefault(handler => handler.CanHandle(task));
+
+        if (handler is null)
+        {
+            throw new NotImplementedException($"Unsupported task for processing: {task.GetType()}");
+        }
+
+        await handler.Handle(application.Id, task.Id, cancellationToken);
+    }
+}

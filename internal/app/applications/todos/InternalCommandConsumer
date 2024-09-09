@@ -1,0 +1,83 @@
+using Confluent.Kafka;
+
+using MediatR;
+
+using Microsoft.Extensions.Options;
+
+namespace O.Creator.Applications.Presentation.Consumers.Internal.Tasks;
+
+internal sealed class InternalCommandConsumer : IKafkaMessageHandler<InternalCommandMessageKey, InternalCommandMessageValue>
+{
+    private readonly ILogger<InternalCommandConsumer> _logger;
+    private readonly IMediator _mediator;
+    private readonly IOptionsMonitor<TasksConsumerOptions> _optionsMonitor;
+    private readonly IEventBus<InternalCommandMessageKey, InternalCommandMessageValue> _producer;
+    private readonly IWebHostEnvironment _webHostEnvironment;
+
+    public InternalCommandConsumer(
+        IMediator mediator,
+        IEventBus<InternalCommandMessageKey, InternalCommandMessageValue> producer,
+        IOptionsMonitor<TasksConsumerOptions> optionsMonitor,
+        ILogger<InternalCommandConsumer> logger,
+        IWebHostEnvironment webHostEnvironment)
+    {
+        _mediator = mediator;
+        _producer = producer;
+        _optionsMonitor = optionsMonitor;
+        _logger = logger;
+        _webHostEnvironment = webHostEnvironment;
+    }
+
+    public async Task Handle(ConsumeResult<InternalCommandMessageKey, InternalCommandMessageValue> message, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await HandleInner(message, cancellationToken);
+        }
+        catch (Exception e)
+        {
+            TasksConsumerOptions options = _optionsMonitor.CurrentValue;
+
+            if (!_webHostEnvironment.IsProduction() && options.SkipExceptions)
+            {
+                return;
+            }
+
+            string errorMessage = BuildErrorMessage(message, options);
+            _logger.LogError(e, errorMessage);
+
+            if (options.RetryForUnhandledException)
+            {
+                await Task.Delay(options.RetryDelayInMillisecond, cancellationToken);
+                await _producer.Publish(message.Message.Key, message.Message.Value, cancellationToken);
+            }
+            else
+            {
+                throw;
+            }
+        }
+    }
+
+    private async Task HandleInner(ConsumeResult<InternalCommandMessageKey, InternalCommandMessageValue> message, CancellationToken cancellationToken)
+    {
+        InternalCommandMessageValue messageValue = message.Message.Value;
+
+        IRequest command = messageValue.CommandCase switch
+        {
+            InternalCommandMessageValue.CommandOneofCase.ProcessInternalTasksCommand =>
+                new ProcessTasksCommandInternal(Guid.Parse(messageValue.ProcessInternalTasksCommand.ApplicationId)),
+            _ => throw new ArgumentOutOfRangeException()
+        };
+
+        await _mediator.Send(command, cancellationToken);
+    }
+
+    private string BuildErrorMessage(ConsumeResult<InternalCommandMessageKey, InternalCommandMessageValue> message, TasksConsumerOptions options)
+    {
+        string errorMessage = $"Error processing event {message.GetType()}. MessageKey: '{message.Message.Key}'.";
+
+        return options.RetryForUnhandledException
+            ? errorMessage + $" The event will be sent for reprocessing via {options.RetryDelayInMillisecond}ms."
+            : errorMessage;
+    }
+}
